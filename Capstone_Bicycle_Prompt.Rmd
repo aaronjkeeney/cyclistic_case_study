@@ -1,8 +1,8 @@
 ---
-title: "Capstone_Bicycle_Prompt"
+title: "README"
 author: "Aaron"
 date: "2023-06-20"
-output: html_document
+output: github_document
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
