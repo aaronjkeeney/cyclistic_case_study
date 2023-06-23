@@ -1,0 +1,135 @@
+---
+title: "Capstone_Bicycle_Prompt"
+author: "Aaron"
+date: "2023-06-20"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Google Certificate in Data Analytics
+## Capstone Project #1
+
+### Introduction
+This is the first of several projects for practicing and showcasing what I have learned throughout this course. In this case study, my main focus is to develop a solid R Markdown document for ease of creating a report that is easily followed by colleagues and stakeholders.
+
+#### Notes
+These data are provided under [this license](https://ride.divvybikes.com/data-license-agreement). Since the dataset(s) are extremely large, I intend to compile and clean them in BigQuery and/or R. If there ends up being a smaller dataset, I might switch to a spreadsheet, unless I have already laid the necessary infrastructure in R.
+
+## Business Goals (Ask)
+Director of Marketing, Lily Moreno has asked for analysis of Cyclistic's internal data, with the overarching goal of converting casual users into annual subscribers. She has asked three specific questions:
+
+* How do annual members and casual riders use Cyclistic bikes differently?
+
+* Why would casual riders buy Cyclistic annual memberships?
+
+* How can Cyclistic use digital media to influence casual riders to become members?
+
+For this report, we will focus on the first question and analyze the differences in use patterns by casual riders and annual members.
+
+## Data Preparation (Prepare/Process)
+Ride data from June 2022 to May 2023 were retrieved from Cyclistic's internal database. (Note: the data are actually made available by Motivate International Inc. via the previous link.)
+
+The data files contain tables with about 200,000 to 1,000,000 rows, so Spreadsheets will be too bulky for the initial cleaning and preparation.
+
+#### These are the necessary packages for this analysis.
+```{r}
+library(tidyverse)
+library(readr)
+library(lubridate)
+library(ggplot2)
+library(knitr)
+getwd()
+setwd("~/Desktop/Coding Projects/Capstone_Cyclistic_Raw_Data/Cyclistic_csv_files")
+```
+
+#### Importing the necessary data.
+##### Note: changed September from "trippublicdata" to "tripdata" for consistency.
+```{r}
+setwd("~/Desktop/Coding Projects/Capstone_Cyclistic_Raw_Data/Cyclistic_csv_files")
+Jun_2022 <- read_csv("202206-divvy-tripdata.csv")
+Jul_2022 <- read_csv("202207-divvy-tripdata.csv")
+Aug_2022 <- read_csv("202208-divvy-tripdata.csv")
+Sep_2022 <- read_csv("202209-divvy-tripdata.csv")
+Oct_2022 <- read_csv("202210-divvy-tripdata.csv")
+Nov_2022 <- read_csv("202211-divvy-tripdata.csv")
+Dec_2022 <- read_csv("202212-divvy-tripdata.csv")
+Jan_2023 <- read_csv("202301-divvy-tripdata.csv")
+Feb_2023 <- read_csv("202302-divvy-tripdata.csv")
+Mar_2023 <- read_csv("202303-divvy-tripdata.csv")
+Apr_2023 <- read_csv("202304-divvy-tripdata.csv")
+May_2023 <- read_csv("202305-divvy-tripdata.csv")
+```
+
+#### After using colnames() and str() to ensure matching datasets, 
+#### the above datasets were merged.
+```{r}
+all_trips <- rbind(Jun_2022, Jul_2022, Aug_2022, Sep_2022, Oct_2022, 
+                       Nov_2022, Dec_2022, Jan_2023, Feb_2023, Mar_2023,
+                       Apr_2023, May_2023)
+```
+
+#### A quick snapshot for orientation and an idea of scale.
+```{r}
+str(all_trips)
+ncol(all_trips)
+nrow(all_trips)
+```
+
+
+
+#### Confirmation that there are only two labels for members.
+```{r}
+categories <- unique(all_trips$member_casual)
+number_of_categories <- length(categories)
+list(categories)
+table(all_trips$member_casual)
+```
+There are no extraneous values to be removed, although there will be further
+cleaning of nonsensical values.
+
+#### These next steps split the datetime column into more human time, 
+#### day, month, etc. Not entirely sure why format() could not extract the
+#### day of the week, but the weekdays() function worked perfectly.
+```{r}
+all_trips$date <- as.Date(all_trips$started_at)
+all_trips$month <- format(as.Date(all_trips$date),"%m")
+all_trips$day <- format(as.Date(all_trips$date),"%d")
+all_trips$year <- format(as.Date(all_trips$date),"%Y")
+all_trips$day_of_week <- weekdays(as.Date(all_trips$date))
+```
+
+#### Confirmation of the correct structure.
+```{r}
+table(all_trips$month)
+table(all_trips$day)
+table(all_trips$year)
+table(all_trips$day_of_week)
+```
+12 months, 31 days, 2 years, and 7 days of the week, as expected.
+
+#### Calculating the ride length and ensuring the correct format.
+```{r}
+all_trips$ride_length <- difftime(all_trips$ended_at, all_trips$started_at)
+all_trips$ride_length <- as.numeric(as.character(all_trips$ride_length))
+is.numeric(all_trips$ride_length)
+```
+
+#### Need to remove negative trip lengths and quality control checks
+#### This is the formula I used, as the method using an operator did not work.
+#### After a dplyr update, the ! operator method worked perfectly well.
+```{r}
+all_trips_v2 <- subset(all_trips, all_trips$ride_length > 0 
+                       & all_trips$start_station_name != "HQ QR")
+```
+
+#### Here is the other possibility that I would like to compare for speed.
+all_trips_v2 <- all_trips[!(all_trips$start_station_name == "HQ QR"
+                            | all_trips$ride_length<0),]
+                            
+#### Just a quick check for oddities
+```{r}
+summary(all_trips_v2$ride_length)
+```
+
