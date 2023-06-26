@@ -1,4 +1,4 @@
-Capstone_Bicycle_Prompt
+README
 ================
 Aaron
 2023-06-20
@@ -74,7 +74,7 @@ library(knitr)
 getwd()
 ```
 
-    ## [1] "/Users/aaronkeeney/Documents/Data Analytics Projects"
+    ## [1] "/Users/aaronkeeney/Documents/Data Analytics Projects/Cyclistic"
 
 ``` r
 setwd("~/Desktop/Coding Projects/Capstone_Cyclistic_Raw_Data/Cyclistic_csv_files")
@@ -425,3 +425,195 @@ summary(all_trips_v2$ride_length)
 
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
     ##       1     343     603    1183    1081 2483235
+
+This summary shows a large maximum value, so it is best to check for
+outliers.
+
+``` r
+ride_length_outlier_check <- all_trips_v2 %>%
+  arrange(desc(ride_length))
+head(ride_length_outlier_check)
+```
+
+    ## # A tibble: 6 × 19
+    ##   ride_id          rideable_type started_at          ended_at           
+    ##   <chr>            <chr>         <dttm>              <dttm>             
+    ## 1 7D4CB0DD5137CA9A docked_bike   2022-10-01 15:04:38 2022-10-30 08:51:53
+    ## 2 94DD1FB2367EA8B6 docked_bike   2022-06-15 07:56:59 2022-07-10 04:57:37
+    ## 3 70835A30C542BA2E docked_bike   2022-07-09 01:02:46 2022-08-01 19:11:35
+    ## 4 3BFD0599F253B024 docked_bike   2022-07-09 01:03:19 2022-08-01 19:11:26
+    ## 5 A256444CE831A7EE docked_bike   2022-07-09 01:02:45 2022-08-01 18:51:57
+    ## 6 307CA01BAE3CC7E3 docked_bike   2023-01-08 11:08:52 2023-01-31 19:12:36
+    ## # ℹ 15 more variables: start_station_name <chr>, start_station_id <chr>,
+    ## #   end_station_name <chr>, end_station_id <chr>, start_lat <dbl>,
+    ## #   start_lng <dbl>, end_lat <dbl>, end_lng <dbl>, member_casual <chr>,
+    ## #   date <date>, month <chr>, day <chr>, year <chr>, day_of_week <chr>,
+    ## #   ride_length <dbl>
+
+From this quick analysis, we see that there are multiple ride lengths
+over 2 million seconds. Note: in the above script, all the rider types
+were casual, which may be significant. MAKE A VISUAL TO ILLUSTRATE
+THIS!!! Show ride lengths, and frequency of certain bins—I think a
+histogram with separate columns for members and casual riders. Or, two
+separate histograms, kinda like a probability ditribution.
+
+## Summary Statistics, Analysis, and Visualizations
+
+#### Basic Overview: Mean, Median, Max, Min (In seconds)
+
+``` r
+mean(all_trips_v2$ride_length)
+```
+
+    ## [1] 1182.649
+
+``` r
+median(all_trips_v2$ride_length)
+```
+
+    ## [1] 603
+
+``` r
+max(all_trips_v2$ride_length)
+```
+
+    ## [1] 2483235
+
+``` r
+min(all_trips_v2$ride_length)
+```
+
+    ## [1] 1
+
+``` r
+sd(all_trips_v2$ride_length)
+```
+
+    ## [1] 11377.21
+
+#### Summary Statistics, Separated by Rider Type
+
+``` r
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = length)
+```
+
+    ##   all_trips_v2$member_casual all_trips_v2$ride_length
+    ## 1                     casual                  1967720
+    ## 2                     member                  3026232
+
+``` r
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = mean)
+```
+
+    ##   all_trips_v2$member_casual all_trips_v2$ride_length
+    ## 1                     casual                1844.4176
+    ## 2                     member                 752.3535
+
+``` r
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = median)
+```
+
+    ##   all_trips_v2$member_casual all_trips_v2$ride_length
+    ## 1                     casual                      768
+    ## 2                     member                      521
+
+``` r
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = max)
+```
+
+    ##   all_trips_v2$member_casual all_trips_v2$ride_length
+    ## 1                     casual                  2483235
+    ## 2                     member                    93580
+
+``` r
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = min)
+```
+
+    ##   all_trips_v2$member_casual all_trips_v2$ride_length
+    ## 1                     casual                        1
+    ## 2                     member                        1
+
+``` r
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = sd)
+```
+
+    ##   all_trips_v2$member_casual all_trips_v2$ride_length
+    ## 1                     casual                17961.456
+    ## 2                     member                 1834.608
+
+#### Number of Rides by Rider Type and Day of the Week (requested)
+
+``` r
+## Number of rides by rider type and day of the week
+all_trips_v2 %>%
+  mutate(weekday = wday(started_at, label=TRUE)) %>%
+  group_by(member_casual, weekday) %>%
+  summarise(number_of_rides = n(), average_duration = mean(ride_length)) %>%
+  arrange(member_casual, weekday)
+```
+
+    ## `summarise()` has grouped output by 'member_casual'. You can override using the
+    ## `.groups` argument.
+
+    ## # A tibble: 14 × 4
+    ## # Groups:   member_casual [2]
+    ##    member_casual weekday number_of_rides average_duration
+    ##    <chr>         <ord>             <int>            <dbl>
+    ##  1 casual        Sun              322008            2181.
+    ##  2 casual        Mon              219537            1802.
+    ##  3 casual        Tue              229913            1654.
+    ##  4 casual        Wed              247445            1561.
+    ##  5 casual        Thu              265164            1588.
+    ##  6 casual        Fri              292763            1794.
+    ##  7 casual        Sat              390890            2094.
+    ##  8 member        Sun              335506             839.
+    ##  9 member        Mon              409435             714.
+    ## 10 member        Tue              480681             722.
+    ## 11 member        Wed              502344             718.
+    ## 12 member        Thu              487275             725.
+    ## 13 member        Fri              428644             744.
+    ## 14 member        Sat              382347             846.
+
+``` r
+all_trips_v2 %>%
+  mutate(weekday = wday(started_at, label=TRUE)) %>%
+  group_by(member_casual, weekday) %>%
+  summarise(number_of_rides = n(), average_duration = mean(ride_length)) %>%
+  arrange(member_casual, weekday) %>%
+  ggplot(aes(x=weekday, y=number_of_rides, fill=member_casual))+
+  geom_col(position = "dodge")
+```
+
+    ## `summarise()` has grouped output by 'member_casual'. You can override using the
+    ## `.groups` argument.
+
+![](Capstone_Bicycle_Prompt_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+#### Ride Duration by Rider Type and Day of the Week
+
+``` r
+all_trips_v2 %>%
+  mutate(weekday = wday(started_at, label=TRUE)) %>%
+  group_by(member_casual, weekday) %>%
+  summarise(number_of_rides = n(), average_duration = mean(ride_length)) %>%
+  arrange(member_casual, weekday) %>%
+  ggplot(aes(x=weekday, y=average_duration, fill=member_casual))+
+  geom_col(position = "dodge")
+```
+
+    ## `summarise()` has grouped output by 'member_casual'. You can override using the
+    ## `.groups` argument.
+
+![](Capstone_Bicycle_Prompt_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+#### Distribution of Ride Lengths (working version)
+
+``` r
+all_trips_v2 %>%
+  group_by(ride_length) %>%
+  summarise(Rides=n()) %>%
+ggplot(aes(x=ride_length, y = Rides)) +
+  geom_col()
+```
+
+![](Capstone_Bicycle_Prompt_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->

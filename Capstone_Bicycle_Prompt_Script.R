@@ -153,3 +153,22 @@ nrow(all_trips_v2) == length(which(all_trips_v2$member_casual =="casual"))+
   length(which(all_trips_v2$member_casual =="member"))
 
 length(unique(all_trips_v2$start_station_name))
+
+ride_length_dist <- data.frame("Rides" = count(all_trips_v2, ride_length),
+                               "Ride_Time" = unique(all_trips_v2$ride_length))
+
+Rides <- count(all_trips_v2, ride_length)
+ggplot(data = ride_length_dist, mapping = aes(x= "Ride_Time", y="Rides"))+
+  geom_bar()
+
+all_trips_v2 %>%
+  group_by(ride_length) %>%
+  summarise(Rides=n()) %>%
+ggplot(aes(x=ride_length, y = Rides)) +
+  geom_col()
+       
+  
+  
+str(ride_length_dist)
+
+is.numeric(ride_length_dist)

@@ -132,4 +132,73 @@ all_trips_v2 <- all_trips[!(all_trips$start_station_name == "HQ QR"
 ```{r}
 summary(all_trips_v2$ride_length)
 ```
+This summary shows a large maximum value, so it is best to check for outliers.
+
+```{r}
+ride_length_outlier_check <- all_trips_v2 %>%
+  arrange(desc(ride_length))
+head(ride_length_outlier_check)
+```
+From this quick analysis, we see that there are multiple ride lengths over 2 million seconds. Note: in the above script, all the rider types were casual, which may be significant. MAKE A VISUAL TO ILLUSTRATE THIS!!! Show ride lengths, and frequency of certain bins---I think a histogram with separate columns for members and casual riders. Or, two separate histograms, kinda like a probability ditribution.
+
+## Summary Statistics, Analysis, and Visualizations
+
+#### Basic Overview: Mean, Median, Max, Min (In seconds)
+```{r}
+mean(all_trips_v2$ride_length)
+median(all_trips_v2$ride_length)
+max(all_trips_v2$ride_length)
+min(all_trips_v2$ride_length)
+sd(all_trips_v2$ride_length)
+```
+
+#### Summary Statistics, Separated by Rider Type
+```{r}
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = length)
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = mean)
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = median)
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = max)
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = min)
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = sd)
+```
+
+#### Number of Rides by Rider Type and Day of the Week (requested)
+```{r}
+## Number of rides by rider type and day of the week
+all_trips_v2 %>%
+  mutate(weekday = wday(started_at, label=TRUE)) %>%
+  group_by(member_casual, weekday) %>%
+  summarise(number_of_rides = n(), average_duration = mean(ride_length)) %>%
+  arrange(member_casual, weekday)
+```
+```{r}
+all_trips_v2 %>%
+  mutate(weekday = wday(started_at, label=TRUE)) %>%
+  group_by(member_casual, weekday) %>%
+  summarise(number_of_rides = n(), average_duration = mean(ride_length)) %>%
+  arrange(member_casual, weekday) %>%
+  ggplot(aes(x=weekday, y=number_of_rides, fill=member_casual))+
+  geom_col(position = "dodge")
+
+```
+
+#### Ride Duration by Rider Type and Day of the Week
+```{r}
+all_trips_v2 %>%
+  mutate(weekday = wday(started_at, label=TRUE)) %>%
+  group_by(member_casual, weekday) %>%
+  summarise(number_of_rides = n(), average_duration = mean(ride_length)) %>%
+  arrange(member_casual, weekday) %>%
+  ggplot(aes(x=weekday, y=average_duration, fill=member_casual))+
+  geom_col(position = "dodge")
+```
+
+#### Distribution of Ride Lengths (working version)
+```{r}
+all_trips_v2 %>%
+  group_by(ride_length) %>%
+  summarise(Rides=n()) %>%
+ggplot(aes(x=ride_length, y = Rides)) +
+  geom_col()
+```
 
