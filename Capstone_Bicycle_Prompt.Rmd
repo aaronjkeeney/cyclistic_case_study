@@ -1,14 +1,14 @@
 ---
-title: "README"
 author: "Aaron"
 date: "2023-06-20"
+title: "Google Certificate in Data Analytics"
+knit: (function(input, encoding) {rmarkdown::render(input, output_file = 'README')})
 output: github_document
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Google Certificate in Data Analytics
 ## Capstone Project #1
 
 ### Introduction
@@ -195,10 +195,11 @@ all_trips_v2 %>%
 
 #### Distribution of Ride Lengths (working version)
 ```{r}
-all_trips_v2 %>%
-  group_by(ride_length) %>%
-  summarise(Rides=n()) %>%
-ggplot(aes(x=ride_length, y = Rides)) +
-  geom_col()
+ggplot(data = all_trips_v2) +
+  geom_bar(mapping = aes(x=ride_length, fill = member_casual))+
+    facet_wrap(~member_casual) +
+    xlim(0,5000) +
+    ylim(0,2000)+
+  labs(title = "Ride Length", subtitle = "Differences between Casual Riders and Members", x = "Ride Time (sec)", y = ("Number of Rides"))
 ```
-
+This shows the difference in the ways that members and casual riders use the bikeshare services. The most interesting feature to note is the gap in Ride Time for members. Additionally the longer tail on the Ride Time curve for casual users (cut shor here) shows that casual riders are more likely to take longer rides.

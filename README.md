@@ -1,9 +1,7 @@
-README
+Google Certificate in Data Analytics
 ================
 Aaron
 2023-06-20
-
-# Google Certificate in Data Analytics
 
 ## Capstone Project \#1
 
@@ -587,7 +585,7 @@ all_trips_v2 %>%
     ## `summarise()` has grouped output by 'member_casual'. You can override using the
     ## `.groups` argument.
 
-![](Capstone_Bicycle_Prompt_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 #### Ride Duration by Rider Type and Day of the Week
 
@@ -604,16 +602,26 @@ all_trips_v2 %>%
     ## `summarise()` has grouped output by 'member_casual'. You can override using the
     ## `.groups` argument.
 
-![](Capstone_Bicycle_Prompt_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 #### Distribution of Ride Lengths (working version)
 
 ``` r
-all_trips_v2 %>%
-  group_by(ride_length) %>%
-  summarise(Rides=n()) %>%
-ggplot(aes(x=ride_length, y = Rides)) +
-  geom_col()
+ggplot(data = all_trips_v2) +
+  geom_bar(mapping = aes(x=ride_length, fill = member_casual))+
+    facet_wrap(~member_casual) +
+    xlim(0,5000) +
+    ylim(0,2000)+
+  labs(title = "Ride Length", subtitle = "Differences between Casual Riders and Members", x = "Ride Time (sec)", y = ("Number of Rides"))
 ```
 
-![](Capstone_Bicycle_Prompt_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+    ## Warning: Removed 80655 rows containing non-finite values (`stat_count()`).
+
+    ## Warning: Removed 573 rows containing missing values (`geom_bar()`).
+
+![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- --> This shows
+the difference in the ways that members and casual riders use the
+bikeshare services. The most interesting feature to note is the gap in
+Ride Time for members. Additionally the longer tail on the Ride Time
+curve for casual users (cut shor here) shows that casual riders are more
+likely to take longer rides.
