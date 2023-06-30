@@ -165,10 +165,97 @@ all_trips_v2 %>%
   group_by(ride_length) %>%
   summarise(Rides=n()) %>%
 ggplot(aes(x=ride_length, y = Rides)) +
-  geom_col()
-       
+  geom_col(color = "purple", width = 1) +
+  facet_wrap(~member_casual)
+
+ggplot(data = all_trips_v2) +
+  geom_bar(mapping = aes(x=ride_length, fill = member_casual))+
+    facet_wrap(~member_casual) +
+    xlim(0,5000) +
+    ylim(0,2000)
+
+ggplot(data = all_trips_v2) +
+  geom_bar(mapping = aes(x=ride_length, fill = member_casual))+
+  facet_wrap(~member_casual) +
+  xlim(0,5000) +
+  ylim(0,2000)+
+  labs(title = "Ride Length", subtitle = "Differences between Casual Riders and Members", 
+       x = "Ride Time (sec)", y = ("Number of Rides"))
+    
+counts <- aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual + 
+                      all_trips_v2$day_of_week, FUN = mean)
+
+write.csv(counts, file = '~/Documents/Data Analytics Projects/Cyclistic/avg_ride_length.csv')
   
-  
+write.csv(all_trips_v2, file = '~/Documents/Data Analytics Projects/Cyclistic/cleaned_cyclistic_data.csv')
+
 str(ride_length_dist)
 
 is.numeric(ride_length_dist)
+
+members_only_subset <- subset(all_trips_v2, member_casual =="member")
+members_only_bang <- all_trips_v2[!(all_trips_v2$member_casual=="casual"),]
+## This comma at the end is crucial, but I don't know exactly why...I assume it
+## deals with the default arguments of the function?
+str(members_only_subset)
+str(members_only_bang)
+
+## Splitting the dataset by member type, so that we don't need to facet.
+members_only <- members_only_bang <- all_trips_v2[!(all_trips_v2$member_casual=="casual"),]
+casual_riders_only <- members_only_bang <- all_trips_v2[!(all_trips_v2$member_casual=="member"),]
+
+
+## We want to show some useful traffic pattern information. Reduced alpha should
+## have an effect similar to a heat map, since more common areas will overlap.
+ggplot(data = members_only) +
+  geom_point(mapping = aes(x=start_lng, y=start_lat, color = ride_length), 
+             alpha = 0.01)
+
+## Trying to parse out the most common stations. We might want to evaluate the 
+## net bike flow to and from each station!!
+ggplot(data = members_only) +
+  geom_bar(mapping = aes(x=start_station_name))
+
+most_common_stations <- all_trips_v2 %>%
+  group_by(start_station_name) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n))
+
+most_common_stations_members <- members_only %>%
+  group_by(start_station_name) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n))
+
+most_common_stations_casual <- casual_riders_only %>%
+  group_by(start_station_name) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n))
+
+##This is an extremely important discovery. Since the goal is to increase 
+## membership, we have determined which stations have the most members and which
+## have the most casual riders. This can tell us where to focus our efforts
+## on marketing to create more members.
+
+most_common_stations[1:10,]
+most_common_stations_members[1:10,]
+most_common_stations_casual[1:10,]
+
+ggplot(data = most_common_stations[1:20,]) +
+  geom_col(mapping =aes(x= start_station_name, y = n), fill = "blue") +
+  labs(title = "Stations with Largest Total Ridership", x= "Station", 
+       y = "Total Rides") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+ggplot(data = most_common_stations_members[1:20,]) +
+  geom_col(mapping =aes(x= start_station_name, y = n), fill = "orange") +
+  labs(title = "Stations with Largest Member Ridership", x= "Station", 
+       y = "Total Rides") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+ggplot(data = most_common_stations_casual[1:20,]) +
+  geom_col(mapping =aes(x= start_station_name, y = n), fill = "purple") +
+  labs(title = "Stations with Largest Casual Ridership", x= "Station", 
+       y = "Total Rides") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+

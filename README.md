@@ -14,12 +14,17 @@ that is easily followed by colleagues and stakeholders.
 
 #### Notes
 
-These data are provided under [this
+These [data](https://divvy-tripdata.s3.amazonaws.com/index.html) are
+provided under [this
 license](https://ride.divvybikes.com/data-license-agreement). Since the
 dataset(s) are extremely large, I intend to compile and clean them in
 BigQuery and/or R. If there ends up being a smaller dataset, I might
 switch to a spreadsheet, unless I have already laid the necessary
 infrastructure in R.
+
+Thank you to HanOostdijk for giving some
+[advice](https://community.rstudio.com/t/rmarkdow-how-can-i-create-a-pdf-file-with-different-name-from-rmd/67879)
+with knitting to git.
 
 ## Business Goals (Ask)
 
@@ -311,6 +316,8 @@ nrow(all_trips)
 
     ## [1] 5829030
 
+### Checking for oddities that would require cleaning
+
 #### Confirmation that there are only two labels for members.
 
 ``` r
@@ -335,9 +342,10 @@ further cleaning of nonsensical values.
 
 #### These next steps split the datetime column into more human time,
 
-#### day, month, etc. Not entirely sure why format() could not extract the
+#### day, month, etc.
 
-#### day of the week, but the weekdays() function worked perfectly.
+Not entirely sure why format() could not extract the day of the week,
+but the weekdays() function worked perfectly.
 
 ``` r
 all_trips$date <- as.Date(all_trips$started_at)
@@ -401,19 +409,19 @@ is.numeric(all_trips$ride_length)
 
 #### Need to remove negative trip lengths and quality control checks
 
-#### This is the formula I used, as the method using an operator did not work.
-
-#### After a dplyr update, the ! operator method worked perfectly well.
-
 ``` r
 all_trips_v2 <- subset(all_trips, all_trips$ride_length > 0 
                        & all_trips$start_station_name != "HQ QR")
 ```
 
-#### Here is the other possibility that I would like to compare for speed.
+Here is the other possibility that I would like to compare for speed. It
+should be approximately the same, but this is syntax learning for my own
+benefit.
 
-all_trips_v2 \<-
-all_trips\[!(all_trips$start_station_name == "HQ QR"  | all_trips$ride_length\<0),\]
+``` r
+## all_trips_v2 <- all_trips[!(all_trips$start_station_name == "HQ QR"
+##                         | all_trips$ride_length<0),]
+```
 
 #### Just a quick check for oddities
 
@@ -430,30 +438,31 @@ outliers.
 ``` r
 ride_length_outlier_check <- all_trips_v2 %>%
   arrange(desc(ride_length))
-head(ride_length_outlier_check)
+ride_length_outlier_check[1:30, c("ride_id","ride_length", "member_casual")]
 ```
 
-    ## # A tibble: 6 × 19
-    ##   ride_id          rideable_type started_at          ended_at           
-    ##   <chr>            <chr>         <dttm>              <dttm>             
-    ## 1 7D4CB0DD5137CA9A docked_bike   2022-10-01 15:04:38 2022-10-30 08:51:53
-    ## 2 94DD1FB2367EA8B6 docked_bike   2022-06-15 07:56:59 2022-07-10 04:57:37
-    ## 3 70835A30C542BA2E docked_bike   2022-07-09 01:02:46 2022-08-01 19:11:35
-    ## 4 3BFD0599F253B024 docked_bike   2022-07-09 01:03:19 2022-08-01 19:11:26
-    ## 5 A256444CE831A7EE docked_bike   2022-07-09 01:02:45 2022-08-01 18:51:57
-    ## 6 307CA01BAE3CC7E3 docked_bike   2023-01-08 11:08:52 2023-01-31 19:12:36
-    ## # ℹ 15 more variables: start_station_name <chr>, start_station_id <chr>,
-    ## #   end_station_name <chr>, end_station_id <chr>, start_lat <dbl>,
-    ## #   start_lng <dbl>, end_lat <dbl>, end_lng <dbl>, member_casual <chr>,
-    ## #   date <date>, month <chr>, day <chr>, year <chr>, day_of_week <chr>,
-    ## #   ride_length <dbl>
+    ## # A tibble: 30 × 3
+    ##    ride_id          ride_length member_casual
+    ##    <chr>                  <dbl> <chr>        
+    ##  1 7D4CB0DD5137CA9A     2483235 casual       
+    ##  2 94DD1FB2367EA8B6     2149238 casual       
+    ##  3 70835A30C542BA2E     2052529 casual       
+    ##  4 3BFD0599F253B024     2052487 casual       
+    ##  5 A256444CE831A7EE     2051352 casual       
+    ##  6 307CA01BAE3CC7E3     2016224 casual       
+    ##  7 59F28D6FACEC86EB     1944178 casual       
+    ##  8 DC510E6F98003A94     1922127 casual       
+    ##  9 4BF7A8BC8417643F     1876169 casual       
+    ## 10 DCB66918A43B6B92     1866638 casual       
+    ## # ℹ 20 more rows
 
-From this quick analysis, we see that there are multiple ride lengths
-over 2 million seconds. Note: in the above script, all the rider types
-were casual, which may be significant. MAKE A VISUAL TO ILLUSTRATE
-THIS!!! Show ride lengths, and frequency of certain bins—I think a
-histogram with separate columns for members and casual riders. Or, two
-separate histograms, kinda like a probability ditribution.
+From this quick analysis, we see that there are many ride lengths that
+last on the order of weeks. It will be difficult (and probably
+erroneous) to classify these rides as outliers. Note: in the above
+script, all the rider types were casual, which may be significant.
+Because the number of these rides is so small, they are not huge
+disruptors of our data. However, this information could be useful in
+tracking lost bikes.
 
 ## Summary Statistics, Analysis, and Visualizations
 
@@ -585,7 +594,7 @@ all_trips_v2 %>%
     ## `summarise()` has grouped output by 'member_casual'. You can override using the
     ## `.groups` argument.
 
-![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 #### Ride Duration by Rider Type and Day of the Week
 
@@ -602,7 +611,7 @@ all_trips_v2 %>%
     ## `summarise()` has grouped output by 'member_casual'. You can override using the
     ## `.groups` argument.
 
-![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 #### Distribution of Ride Lengths (working version)
 
@@ -619,9 +628,94 @@ ggplot(data = all_trips_v2) +
 
     ## Warning: Removed 573 rows containing missing values (`geom_bar()`).
 
-![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- --> This shows
-the difference in the ways that members and casual riders use the
-bikeshare services. The most interesting feature to note is the gap in
-Ride Time for members. Additionally the longer tail on the Ride Time
-curve for casual users (cut shor here) shows that casual riders are more
-likely to take longer rides.
+![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+
+This shows the difference in the ways that members and casual riders use
+the bikeshare services. The most interesting feature to note is the gap
+in Ride Time for members. Additionally the longer tail on the Ride Time
+curve for casual users (cut short here) shows that casual riders are
+more likely to take longer rides.
+
+## Next, we want to evaluate where advertising has the most potential to covert
+
+## casual riders to members. Below are plots that show the most traveled staions,
+
+## as well as a breakdown into members and casual riders.
+
+``` r
+## This code creates the necessary tibbles.
+members_only <- all_trips_v2[!(all_trips_v2$member_casual=="casual"),]
+casual_riders_only <- all_trips_v2[!(all_trips_v2$member_casual=="member"),]
+
+most_common_stations <- all_trips_v2 %>%
+  group_by(start_station_name) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n))
+
+most_common_stations_members <- members_only %>%
+  group_by(start_station_name) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n))
+
+most_common_stations_casual <- casual_riders_only %>%
+  group_by(start_station_name) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n))
+```
+
+``` r
+ggplot(data = most_common_stations[1:20,]) +
+  geom_col(mapping =aes(x= start_station_name, y = n), fill = "blue") +
+  labs(title = "Stations with Largest Total Ridership", x= "Station", 
+       y = "Total Rides") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+
+``` r
+ggplot(data = most_common_stations_members[1:20,]) +
+  geom_col(mapping =aes(x= start_station_name, y = n), fill = "orange") +
+  labs(title = "Stations with Largest Member Ridership", x= "Station", 
+       y = "Total Rides") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-20-2.png)<!-- -->
+
+``` r
+ggplot(data = most_common_stations_casual[1:20,]) +
+  geom_col(mapping =aes(x= start_station_name, y = n), fill = "purple") +
+  labs(title = "Stations with Largest Casual Ridership", x= "Station", 
+       y = "Total Rides") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-20-3.png)<!-- -->
+
+## Final Conclusions
+
+The business task for this project was to identify how casual riders and
+members differed in their use of Cyclistic bike rentals. We identified
+differences in daily use, ride length, and which stations each user type
+frequents. The most-used stations by casual riders would be the best
+locations for on-site advertising to covert more casual riders to
+members.
+
+### For further research/inquiry:
+
+- If we can acquire anonymized data to link ride IDs with individual
+  users, we could determine how many casual riders are frequent riders,
+  but not members.
+
+- Is there a difference in ride distance between casual riders and
+  members? Does traffic usually go point-to-point or out-and-back?
+
+- Traffic flow– can we allocate bikes more efficiently? Are there times
+  when potential customers want to rent bikes, but none are available?
+
+#### While not part of the business question, I am interested in an aspect that
+
+#### could save the company a lot of money. I want to analyze “Bike Flow,” which
+
+#### I will define as how many bikes are lost or gained by each station.
